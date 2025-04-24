@@ -319,6 +319,14 @@ function Table2() {
     setTableData((prev) => {
       const newData = { ...prev };
       newData.data[groupIndex].values[rowIndex][field] = value;
+
+      // Якщо змінилось значення L, одразу перераховуємо значення
+      if (field === "L") {
+        setTimeout(() => {
+          calculateAndStoreValues(newData);
+        }, 0);
+      }
+
       return newData;
     });
   };

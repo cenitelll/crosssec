@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 
 const config = {
@@ -43,17 +43,28 @@ function Equation8() {
     return saved ? JSON.parse(saved) : [0, 0, 0, 0];
   });
 
+  const updateMath = () => {
+    if (window.MathJax) {
+      window.MathJax.typesetPromise && window.MathJax.typesetPromise();
+    }
+  };
+
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem("groupPhi");
       if (saved) {
         setGroupPhi(JSON.parse(saved));
+        setTimeout(updateMath, 100);
       }
     };
 
     window.addEventListener("updateMF", handleStorageChange);
     return () => window.removeEventListener("updateMF", handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    updateMath();
+  }, [groupPhi, linguisticRanges]);
 
   const handleRangeChange = (level, field, value) => {
     const newValue = parseFloat(value);
@@ -64,6 +75,7 @@ function Equation8() {
           [level]: { ...prev[level], [field]: newValue },
         };
         localStorage.setItem("linguisticRanges", JSON.stringify(newRanges));
+        setTimeout(updateMath, 100);
         return newRanges;
       });
     }
