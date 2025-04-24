@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 
-function Equation11and12() {
+function Equation11and12({ title }) {
   const [mValue, setMValue] = useState(null);
   const [deltaValues, setDeltaValues] = useState([]);
   const [weights, setWeights] = useState([1, 1, 1, 1]); // p1, p2, p3, p4
   const [error, setError] = useState(null);
   const [yTpResult, setYTpResult] = useState(0);
   const [financingLevel, setFinancingLevel] = useState("");
+  const mathJaxRef = useRef(null);
 
   // Функція для визначення рівня фінансування
   const determineFinancingLevel = (yTp) => {
@@ -54,6 +55,12 @@ function Equation11and12() {
     localStorage.setItem("weights", JSON.stringify(newWeights));
   };
 
+  const updateMath = () => {
+    if (window.MathJax) {
+      window.MathJax.typesetPromise && window.MathJax.typesetPromise();
+    }
+  };
+
   useEffect(() => {
     // Зчитуємо збережені ваги
     const savedWeights = localStorage.getItem("weights");
@@ -90,19 +97,22 @@ function Equation11and12() {
         const result = calculateYTp(weights, deltas);
         setYTpResult(result);
         localStorage.setItem("yTpResult", result.toString());
+
+        // Оновлюємо формули
+        setTimeout(updateMath, 100);
       } catch (e) {
         setError("Помилка при зчитуванні даних з localStorage.");
         setMValue(null);
       }
     };
 
-    // При монтуванні та при зміні ваг
     readValues();
 
-    // Слухаємо подію "updateM"
+    // Слухаємо події оновлення
     const handleUpdate = () => {
       readValues();
     };
+
     window.addEventListener("updateM", handleUpdate);
     window.addEventListener("updateMF", handleUpdate);
 
@@ -110,7 +120,7 @@ function Equation11and12() {
       window.removeEventListener("updateM", handleUpdate);
       window.removeEventListener("updateMF", handleUpdate);
     };
-  }, [weights]); // Only depend on weights changes
+  }, [weights]);
 
   // Effect for updating Y_TP when deltaValues change
   useEffect(() => {
@@ -118,8 +128,14 @@ function Equation11and12() {
       const result = calculateYTp(weights, deltaValues);
       setYTpResult(result);
       localStorage.setItem("yTpResult", result.toString());
+      setTimeout(updateMath, 100);
     }
   }, [deltaValues, weights]);
+
+  // Effect for updating MathJax when any value changes
+  useEffect(() => {
+    updateMath();
+  }, [deltaValues, weights, yTpResult]);
 
   return (
     <MathJaxContext>
